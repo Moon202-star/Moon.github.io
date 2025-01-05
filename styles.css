@@ -1,192 +1,315 @@
+:root {
+    --primary-color: #6366f1;
+    --primary-hover: #818cf8;
+    --bg-dark: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-dark: #334155;
+    --error-color: #ef4444;
+    --success-color: #22c55e;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-dark);
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Header */
+header {
+    background: var(--bg-card);
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 0.5rem;
 }
 
-.container {
-    padding: 20px;
-    width: 100%;
-    max-width: 400px;
-    animation: fadeIn 0.5s ease-out;
+.logo img {
+    width: 24px;
+    height: 24px;
 }
 
-.payment-card {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    animation: slideUp 0.5s ease-out;
+nav ul {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
 }
 
-.card-icon {
-    font-size: 40px;
+nav a {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+nav a:hover {
+    color: var(--primary-color);
+}
+
+/* Hero Section */
+.hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    background: var(--bg-dark);
+}
+
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
     text-align: center;
-    margin-bottom: 20px;
-    animation: bounce 0.6s ease-out;
 }
 
-h2 {
+.hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.hero p {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Packages */
+.packages {
+    padding: 5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.packages h2 {
     text-align: center;
-    color: #333;
-    margin-bottom: 30px;
+    margin-bottom: 3rem;
+    font-size: 2rem;
+    color: var(--text-primary);
+}
+
+.package-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.package-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dark);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: transform 0.2s;
+}
+
+.package-card:hover {
+    transform: translateY(-4px);
+}
+
+.package-card.featured {
+    border: 2px solid var(--primary-color);
+}
+
+.package-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.price {
+    font-size: 2rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.package-card ul {
+    list-style: none;
+    margin-bottom: 2rem;
+}
+
+.package-card li {
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.package-card li::before {
+    content: '✓';
+    color: var(--primary-color);
+}
+
+/* Payment Page */
+.payment-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.payment-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+.back-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.payment-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+.payment-left h1 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.order-summary {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.order-summary h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.package-info {
+    color: var(--text-secondary);
+}
+
+.payment-form {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-dark);
+    border-radius: 6px;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
 }
 
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 1rem;
 }
 
-label {
-    display: block;
-    margin-bottom: 8px;
-    color: #666;
-    font-size: 14px;
+.validation-message {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
 }
 
-input {
+.validation-message.valid {
+    color: var(--success-color);
+}
+
+.validation-message.invalid {
+    color: var(--error-color);
+}
+
+.payment-button {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: all 0.3s ease;
-}
-
-input:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-button {
-    width: 100%;
-    padding: 14px;
-    background: #667eea;
-    border: none;
-    border-radius: 8px;
+    padding: 1rem;
+    background: var(--primary-color);
     color: white;
-    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+    transition: background-color 0.2s;
 }
 
-button:hover {
-    background: #5a6fd6;
-    transform: translateY(-1px);
+.payment-button:hover:not(:disabled) {
+    background: var(--primary-hover);
 }
 
-button:active {
-    transform: translateY(1px);
+.payment-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
-.error-message {
-    color: #e53e3e;
-    font-size: 14px;
-    text-align: center;
-    margin: 10px 0;
-    padding: 8px;
-    border-radius: 6px;
-    background: #fff5f5;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
-}
-
-.error-message.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.loader {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 3px solid #ffffff;
-    border-radius: 50%;
-    border-top-color: transparent;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-}
-
-button.loading .loader {
-    display: block;
-    animation: spin 1s linear infinite;
-}
-
-button.loading .button-text {
-    visibility: hidden;
-}
-
-@keyframes spin {
-    to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+@media (max-width: 768px) {
+    .payment-content {
+        grid-template-columns: 1fr;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes bounce {
-    0% { transform: translateY(-20px); opacity: 0; }
-    50% { transform: translateY(10px); }
-    100% { transform: translateY(0); opacity: 1; }
-}
-
-@media (prefers-color-scheme: dark) {
-    .payment-card {
-        background: #1a202c;
-    }
-
-    h2 {
-        color: #fff;
-    }
-
-    label {
-        color: #cbd5e0;
-    }
-
-    input {
-        background: #2d3748;
-        border-color: #4a5568;
-        color: #fff;
-    }
-
-    input::placeholder {
-        color: #718096;
-    }
-
-    .error-message {
-        background: #742a2a;
-        color: #feb2b2;
+    
+    nav ul {
+        display: none;
     }
 }

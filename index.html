@@ -1,49 +1,96 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moon Client - Login</title>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/auth.css">
-    <link rel="stylesheet" href="css/style.css">
+    <title>Moon Client - Premium Gaming Solutions</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/moon.svg">
 </head>
 <body>
-    <div class="theme-switch">
-        <input type="checkbox" id="theme-toggle">
-        <label for="theme-toggle" class="theme-label">
-            <span class="moon">🌙</span>
-            <span class="sun">☀️</span>
-        </label>
-    </div>
+    <header>
+        <nav>
+            <div class="logo">
+                <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/moon.svg" alt="Moon Client Logo">
+                Moon Client
+            </div>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#packages">Packages</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <div class="container">
-        <div class="auth-container">
-            <div class="auth-card">
-                <img src="images/moon-logo.png" alt="Moon Client Logo" class="auth-logo">
-                <h1>Welcome to Moon Client</h1>
-                <form id="loginForm" class="auth-form">
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" required>
-                        <span class="password-toggle">👁️</span>
-                    </div>
-                    <div class="form-options">
-                        <label class="remember-me">
-                            <input type="checkbox" id="rememberMe">
-                            <span>Remember me</span>
-                        </label>
-                    </div>
-                    <button type="submit" class="auth-submit">Login</button>
-                </form>
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Elevate Your Gaming Experience</h1>
+            <p>Experience unparalleled performance and exclusive features with Moon Client's premium gaming solutions. Join thousands of satisfied players worldwide.</p>
+            <a href="#packages" class="cta-button">Explore Packages</a>
+        </div>
+    </section>
+
+    <section id="packages" class="packages">
+        <h2>Select Your Experience</h2>
+        <div class="package-grid">
+            <div class="package-card">
+                <h3>Basic</h3>
+                <p class="price">$9.99/month</p>
+                <ul>
+                    <li>Performance Optimization</li>
+                    <li>Basic Feature Set</li>
+                    <li>24/7 Support Access</li>
+                    <li>Single Profile</li>
+                </ul>
+                <a href="payment.html?package=basic" class="buy-button">Get Started</a>
+            </div>
+            <div class="package-card featured">
+                <h3>Premium</h3>
+                <p class="price">$19.99/month</p>
+                <ul>
+                    <li>All Basic Features</li>
+                    <li>Advanced Configuration</li>
+                    <li>Priority Support</li>
+                    <li>3 Custom Profiles</li>
+                    <li>Exclusive Themes</li>
+                </ul>
+                <a href="payment.html?package=premium" class="buy-button">Get Premium</a>
+            </div>
+            <div class="package-card">
+                <h3>Ultimate</h3>
+                <p class="price">$29.99/month</p>
+                <ul>
+                    <li>All Premium Features</li>
+                    <li>Unlimited Profiles</li>
+                    <li>VIP Support Channel</li>
+                    <li>Early Access Features</li>
+                    <li>Custom Module Access</li>
+                </ul>
+                <a href="payment.html?package=ultimate" class="buy-button">Get Ultimate</a>
             </div>
         </div>
-    </div>
+    </section>
 
-    <script type="module" src="js/main.js"></script>
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Moon Client</h4>
+                <p>Elevating gaming performance with cutting-edge solutions.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>Email: support@moonclient.com</p>
+                <p>Discord: MoonClient#1234</p>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Refund Policy</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
