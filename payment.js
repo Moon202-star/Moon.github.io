@@ -1,163 +1,269 @@
-< !DOCTYPE html >
-    <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Complete Purchase - Moon Client</title>
-                    <link rel="stylesheet" href="styles.css">
-                        <style>
-        /* Önceki stiller aynen kalıyor */
+// Environment configuration - Move to .env file
+const CONFIG = {
+    PACKAGES: {
+        basic: { name: 'Basic Package', price: 9.99, color: '#4f46e5' },
+        premium: { name: 'Premium Package', price: 19.99, color: '#4f46e5' },
+        ultimate: { name: 'Ultimate Package', price: 29.99, color: '#4f46e5' }
+    },
+    CARD_TYPES: {
+        visa: /^4/,
+        mastercard: /^5[1-5]/,
+        amex: /^3[47]/,
+        discover: /^6/
+    }
+};
 
-                            /* 3D Secure ve Güvenlik Göstergeleri için yeni stiller */
-                            .security-badges {
-                                display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 1.5rem;
-                            margin-top: 2rem;
-                            padding: 1rem;
-                            background: var(--bg-light);
-                            border: 1px solid var(--border-light);
-                            border-radius: 8px;
+// Encryption utility using AES
+const cryptoUtils = {
+    generateKey: () => {
+        return window.crypto.getRandomValues(new Uint8Array(32));
+    },
+
+    async encrypt(data) {
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(JSON.stringify(data));
+
+        const key = await window.crypto.subtle.generateKey(
+            { name: 'AES-GCM', length: 256 },
+            true,
+            ['encrypt']
+        );
+
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await window.crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            dataBuffer
+        );
+
+        const exportedKey = await window.crypto.subtle.exportKey('raw', key);
+
+        return {
+            encrypted: Array.from(new Uint8Array(encrypted)),
+            iv: Array.from(iv),
+            key: Array.from(new Uint8Array(exportedKey))
+        };
+    }
+};
+
+// Utility functions
+const utils = {
+    formatCurrency: (amount) => `$${amount.toFixed(2)}`,
+
+    formatCardNumber: (value) => {
+        const numbers = value.replace(/\D/g, '');
+        return numbers.replace(/(\d{4})/g, '$1 ').trim();
+    },
+
+    formatExpiryDate: (value) => {
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length > 2) {
+            return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
+        }
+        return numbers;
+    },
+
+    detectCardType: (number) => {
+        for (const [type, pattern] of Object.entries(CONFIG.CARD_TYPES)) {
+            if (pattern.test(number)) return type;
+        }
+        return 'unknown';
+    },
+
+    validateExpiryDate: (value) => {
+        if (!/^\d{2}\/\d{2}$/.test(value)) return false;
+        const [month, year] = value.split('/').map(num => parseInt(num, 10));
+        const now = new Date();
+        const expiry = new Date(2000 + year, month - 1);
+        return month >= 1 && month <= 12 && expiry > now;
+    },
+
+    validateCVV: (cvv) => /^\d{3,4}$/.test(cvv),
+
+    showToast: (message, type = 'success') => {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }, 100);
+    }
+};
+
+// Luhn algorithm for card validation
+function validateCardNumber(number) {
+    let sum = 0;
+    let isEven = false;
+
+    for (let i = number.length - 1; i >= 0; i--) {
+        let digit = parseInt(number.charAt(i));
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+        isEven = !isEven;
+    }
+
+    return (sum % 10) === 0 && number.length >= 13 && number.length <= 19;
+}
+
+// Form handling
+class PaymentForm {
+    constructor() {
+        this.form = document.getElementById('payment-form');
+        this.package = new URLSearchParams(window.location.search).get('package');
+        this.apiEndpoint = '/api/process-payment'; // Move payment processing to backend
+        this.initializeForm();
+        this.attachEventListeners();
+    }
+
+    initializeForm() {
+        const packageInfo = CONFIG.PACKAGES[this.package];
+        if (!packageInfo) {
+            window.location.href = 'index.html';
+            return;
         }
 
-                            .security-badge {
-                                display: flex;
-                            align-items: center;
-                            gap: 0.5rem;
-                            color: var(--text-secondary);
-                            font-size: 0.875rem;
+        const packageDetails = document.getElementById('package-details');
+        packageDetails.innerHTML = `
+            <div class="package-info">
+                <h3>${packageInfo.name}</h3>
+                <p class="price">${utils.formatCurrency(packageInfo.price)}<span>/month</span></p>
+            </div>
+        `;
+    }
+
+    attachEventListeners() {
+        const cardInput = document.getElementById('card-number');
+        cardInput.addEventListener('input', (e) => {
+            const value = e.target.value.replace(/\s/g, '');
+            e.target.value = utils.formatCardNumber(value);
+            const cardType = utils.detectCardType(value);
+            this.updateCardTypeIndicator(cardType);
+            this.validateField('card-number', value);
+        });
+
+        const expiryInput = document.getElementById('expiry');
+        expiryInput.addEventListener('input', (e) => {
+            e.target.value = utils.formatExpiryDate(e.target.value);
+            this.validateField('expiry', e.target.value);
+        });
+
+        const cvvInput = document.getElementById('cvv');
+        cvvInput.addEventListener('input', (e) => {
+            this.validateField('cvv', e.target.value);
+        });
+
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+
+    updateCardTypeIndicator(type) {
+        const indicator = document.getElementById('card-type');
+        if (indicator) {
+            indicator.className = `card-type ${type}`;
+            indicator.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        }
+    }
+
+    validateField(fieldName, value) {
+        const field = document.getElementById(fieldName);
+        const feedback = document.getElementById(`${fieldName}-feedback`);
+        let isValid = false;
+
+        switch (fieldName) {
+            case 'card-number':
+                isValid = validateCardNumber(value);
+                this.updateFeedback(feedback, isValid, 'Valid card number', 'Invalid card number');
+                break;
+            case 'expiry':
+                isValid = utils.validateExpiryDate(value);
+                this.updateFeedback(feedback, isValid, 'Valid expiry date', 'Invalid expiry date');
+                break;
+            case 'cvv':
+                isValid = utils.validateCVV(value);
+                this.updateFeedback(feedback, isValid, 'Valid CVV', 'Invalid CVV');
+                break;
         }
 
-                            .security-badge img {
-                                height: 24px;
-                            object-fit: contain;
+        field.classList.toggle('valid', isValid);
+        field.classList.toggle('invalid', !isValid && value.length > 0);
+        this.updateSubmitButton();
+    }
+
+    updateFeedback(element, isValid, validMessage, invalidMessage) {
+        if (element) {
+            element.textContent = isValid ? validMessage : invalidMessage;
+            element.className = `validation-message ${isValid ? 'valid' : 'invalid'}`;
         }
+    }
 
-                            .card-icons {
-                                display: flex;
-                            gap: 1rem;
-                            margin-bottom: 1rem;
+    updateSubmitButton() {
+        const submitButton = document.getElementById('submit-payment');
+        const isFormValid = Array.from(this.form.elements)
+            .every(element => !element.classList.contains('invalid') && element.value.length > 0);
+        submitButton.disabled = !isFormValid;
+    }
+
+    async handleSubmit(e) {
+        e.preventDefault();
+        const submitButton = document.getElementById('submit-payment');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Processing...';
+
+        const formData = {
+            cardName: document.getElementById('card-name').value,
+            cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+            expiry: document.getElementById('expiry').value,
+            cvv: document.getElementById('cvv').value,
+            package: CONFIG.PACKAGES[this.package].name,
+            amount: CONFIG.PACKAGES[this.package].price,
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            // Encrypt sensitive data before sending
+            const encryptedData = await cryptoUtils.encrypt(formData);
+            const response = await this.sendPayment(encryptedData);
+
+            if (response.ok) {
+                utils.showToast('Payment successful! Redirecting...');
+                setTimeout(() => window.location.href = 'success.html', 2000);
+            } else {
+                throw new Error('Payment failed');
+            }
+        } catch (error) {
+            utils.showToast('Payment failed. Please try again.', 'error');
+            submitButton.disabled = false;
+            submitButton.textContent = 'Complete Purchase';
+            console.error('Payment Error:', error);
         }
+    }
 
-                            .card-icons img {
-                                height: 24px;
-                            opacity: 0.7;
-                            transition: opacity 0.2s;
-        }
+    async sendPayment(encryptedData) {
+        const requestData = {
+            data: encryptedData.encrypted,
+            iv: encryptedData.iv,
+            key: encryptedData.key
+        };
 
-                            .card-icons img:hover {
-                                opacity: 1;
-        }
+        return fetch(this.apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Request-ID': crypto.randomUUID(), // Add request ID for tracking
+                'X-Timestamp': new Date().toISOString()
+            },
+            body: JSON.stringify(requestData)
+        });
+    }
+}
 
-                            .secure-badge {
-                                display: flex;
-                            align-items: center;
-                            gap: 0.5rem;
-                            color: var(--success-color);
-                            font-size: 0.875rem;
-                            margin-bottom: 1rem;
-        }
-
-                            .secure-badge svg {
-                                width: 16px;
-                            height: 16px;
-        }
-
-                            .payment-info {
-                                margin - top: 1rem;
-                            padding: 1rem;
-                            background: rgba(34, 197, 94, 0.1);
-                            border-radius: 6px;
-                            color: var(--text-secondary);
-                            font-size: 0.875rem;
-                            line-height: 1.5;
-        }
-
-                            .payment-info svg {
-                                width: 16px;
-                            height: 16px;
-                            margin-right: 0.5rem;
-                            vertical-align: middle;
-        }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="payment-container">
-                            <!-- Önceki header kısmı aynen kalıyor -->
-
-                            <div class="order-summary">
-                                <h2>Order Summary</h2>
-                                <div id="package-details" class="package-details">
-                                    <!-- Package details will be inserted by JavaScript -->
-                                </div>
-                            </div>
-
-                            <form id="payment-form" class="payment-form">
-                                <div class="secure-badge">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                    </svg>
-                                    Secure Payment
-                                </div>
-
-                                <div class="card-icons">
-                                    <img src="https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/main/flat/visa.svg" alt="Visa">
-                                        <img src="https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/main/flat/mastercard.svg" alt="Mastercard">
-                                            <img src="https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/main/flat/amex.svg" alt="American Express">
-                                            </div>
-
-                                            <!-- Form grupları aynen kalıyor -->
-                                            <div class="form-group">
-                                                <label for="card-name">Cardholder Name</label>
-                                                <input type="text" id="card-name" required placeholder="John Doe">
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="card-number">Card Number</label>
-                                                <input type="text" id="card-number" required placeholder="1234 5678 9012 3456" maxlength="19">
-                                                    <div id="card-number-feedback" class="validation-message"></div>
-                                            </div>
-
-                                            <div class="form-row">
-                                                <div class="form-group">
-                                                    <label for="expiry">Expiry Date</label>
-                                                    <input type="text" id="expiry" required placeholder="MM/YY" maxlength="5">
-                                                        <div id="expiry-feedback" class="validation-message"></div>
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label for="cvv">CVV</label>
-                                                    <input type="password" id="cvv" required placeholder="123" maxlength="4">
-                                                        <div id="cvv-feedback" class="validation-message"></div>
-                                                </div>
-                                            </div>
-
-                                            <div class="payment-info">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <circle cx="12" cy="12" r="10" />
-                                                    <path d="M12 16v-4" />
-                                                    <path d="M12 8h.01" />
-                                                </svg>
-                                                Your payment is protected by 3D Secure authentication. After clicking "Complete Purchase", you may be redirected to your bank's verification page.
-                                            </div>
-
-                                            <button type="submit" id="submit-payment" class="submit-button" disabled>Complete Purchase</button>
-
-                                            <div class="security-badges">
-                                                <div class="security-badge">
-                                                    <img src="https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/main/flat/visa-verified.svg" alt="Verified by Visa">
-                                                </div>
-                                                <div class="security-badge">
-                                                    <img src="https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/main/flat/mastercard-securecode.svg" alt="Mastercard SecureCode">
-                                                </div>
-                                                <div class="security-badge">
-                                                    <img src="https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/main/flat/ssl.svg" alt="SSL Secure">
-                                                </div>
-                                            </div>
-                                        </form>
-                                </div>
-
-                                <script src="payment.js"></script>
-                            </body>
-                        </html>
+// Initialize form when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => new PaymentForm());
