@@ -3,59 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Moon Client</title>
+    <title>Complete Purchase - Moon Client</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/moon.svg">
+    <style>
+        .payment-container {
+            max-width: 800px;
+            margin: 80px auto 0;
+            padding: 2rem;
+        }
+
+        .payment-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            gap: 0.5rem;
+        }
+
+        .back-link:hover {
+            color: var(--primary-color);
+        }
+
+        .order-summary {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .order-summary h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .package-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .package-info h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .price {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .price span {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .payment-form {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .validation-message {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .validation-message.valid {
+            color: var(--success-color);
+        }
+
+        .validation-message.invalid {
+            color: var(--error-color);
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .submit-button:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 2rem;
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.toast-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .toast.toast-error {
+            background: var(--error-color);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .payment-container {
+                padding: 1rem;
+                margin-top: 60px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="payment-container">
         <div class="payment-header">
             <a href="index.html" class="back-link">
-                <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/arrow-left.svg" alt="Back" class="back-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
                 Back to Home
             </a>
         </div>
 
-        <div class="payment-content">
-            <div class="payment-left">
-                <h1>Complete Purchase</h1>
-                <div class="order-summary">
-                    <h2>Order Summary</h2>
-                    <div id="package-details" class="package-info"></div>
+        <div class="order-summary">
+            <h2>Order Summary</h2>
+            <div id="package-details" class="package-details">
+                <!-- Package details will be inserted by JavaScript -->
+            </div>
+        </div>
+
+        <form id="payment-form" class="payment-form">
+            <div class="form-group">
+                <label for="card-name">Cardholder Name</label>
+                <input type="text" id="card-name" required placeholder="John Doe">
+            </div>
+
+            <div class="form-group">
+                <label for="card-number">Card Number</label>
+                <input type="text" id="card-number" required placeholder="1234 5678 9012 3456" maxlength="19">
+                <div id="card-number-feedback" class="validation-message"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="expiry">Expiry Date</label>
+                    <input type="text" id="expiry" required placeholder="MM/YY" maxlength="5">
+                    <div id="expiry-feedback" class="validation-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cvv">CVV</label>
+                    <input type="password" id="cvv" required placeholder="123" maxlength="4">
+                    <div id="cvv-feedback" class="validation-message"></div>
                 </div>
             </div>
 
-            <form id="payment-form" class="payment-form">
-                <div class="form-group">
-                    <label for="card-name">Cardholder Name</label>
-                    <input type="text" id="card-name" placeholder="John Doe" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="card-number">Card Number</label>
-                    <div class="card-input-wrapper">
-                        <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" required>
-                        <div id="card-validation-message" class="validation-message"></div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="expiry">Expiry Date</label>
-                        <input type="text" id="expiry" placeholder="MM/YY" maxlength="5" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cvv">CVV</label>
-                        <input type="text" id="cvv" placeholder="123" maxlength="4" required>
-                    </div>
-                </div>
-
-                <button type="submit" id="submit-payment" class="payment-button" disabled>
-                    Complete Purchase
-                </button>
-            </form>
-        </div>
+            <button type="submit" id="submit-payment" class="submit-button" disabled>Complete Purchase</button>
+        </form>
     </div>
+
     <script src="payment.js"></script>
 </body>
 </html>
